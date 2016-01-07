@@ -1,0 +1,269 @@
+<html><head><meta charset="UTF-8">
+ <title>Heart and Pulse Animation by Chris B</title>
+ <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Merienda">
+ <link rel="stylesheet" href="css/css_reset.css">
+ <meta name="keywords" content="Svg heart animation,javascript pulse graph">
+ <meta name="description" content="Heart and pulse Animation in Javascript">
+ <meta name="author" content="Chris B">
+ 
+
+<style>
+
+#wrapper{
+
+   text-align           : center;
+   margin-top           : 15%;
+}
+
+h1    { 
+    font-family         : Merienda; 
+	font-size           : 32px;
+	padding-top         : 20px;
+	padding-bottom      : 20px;
+	color               : red;
+	text-shadow         : 0px 5px 10px #BF4B4B;
+
+}
+
+#palm {
+
+     overflow           : hidden;
+	 box-shadow         : 10px 10px 50px 20px pink inset;	
+	 background-color   : white;
+	 
+	 display            : inline-block; 
+	 position           : relative;
+	 width              : 80%;
+	 padding-bottom     : 16.5%; 
+	 vertical-align     : top; 
+	 max-width          : none;
+	 height             : auto;
+	 margin-top         : 0px;
+}
+
+</style>
+
+<script>
+
+function palm( svg_DirectParent , speed , JumpNumber ){
+
+    "use strict";
+	
+var self = this;
+
+        this.jumpOn         = 'off',
+		this.total          = '',
+		this.speed          = "",
+		this.RunningX       = 0,
+		this.GoHeart        = 0,
+		this.RadSin         = 0,
+		this.SVGViewBox     = { 
+		                        X   : "" ,
+		                        Y   : "" ,
+		                        W   : "" ,
+		                        H   : "" 
+		},
+		this.PulseGraph     = {
+		                        X   : "" ,
+								Y   : "" ,
+								dX  : "" 
+		},
+        this.HeartScale     = "",
+		this.AnimateTimes   = "",
+		
+        this.ResetDefault   = function(){
+         		 		 
+		             self.jumpOn        = 'off';
+                     self.total         = "";
+					 self.RunningX      = 0;					 
+
+					 self.speed         = speed;
+					 
+                     self.GoHeart       = 0;
+					 self.RadSin        = 0;
+					 
+					 self.SVGViewBox.X  = 0;
+					 self.SVGViewBox.Y  = 0;
+					 self.SVGViewBox.W  = 960;
+					 self.SVGViewBox.H  = 200;
+					 
+					 self.PulseGraph.X  = [ 0.01 , 0.1  , 0.2  , 0.3  , 0.4  , 0.5  , 0.6  , 0.7  , 0.8  , 0.9  ];
+					 self.PulseGraph.Y  = [ 0.2  , 0.2  , 1    , 0.2  , 0.2  , 0.8  , 1    , 0.8  , 1    , 0.2  ];
+					 self.PulseGraph.dX = [ 0.01 , 0.01 , 0.01 , 0.01 , 0.01 , 0.01 , 0.01 , 0.01 , 0.01 , 0.01 ];	
+					 
+                     self.HeartScale    = 5;
+					 self.AnimateTimes  = 100;
+        }
+        this.Unit_All = function(){
+		      				  
+			      self.UnitSVG();
+		          self.UnitPulse(); 
+				 									   
+		}
+        this.UnitPulse = function(){
+		
+				  self.PulseGraph.X = self.PulseGraph.X.map( function(InPercent) {
+                     
+                                                           	 return parseInt( InPercent * self.SVGViewBox.W , 10 );
+                                                       }); 
+				  self.PulseGraph.Y = self.PulseGraph.Y.map( function(InPercent) {
+                     
+                                                           	 return parseInt( InPercent * self.SVGViewBox.H , 10 );
+                                                       });
+				  self.PulseGraph.dX = self.PulseGraph.dX.map( function(InPercent) {
+                     
+                                                           	 return parseInt( InPercent * self.SVGViewBox.W , 10 );
+                                                       });	
+		
+		}
+		this.UnitSVG = function(){
+		
+			  var viewBox = self.SVGViewBox;
+		      var svgEl   = svg_DirectParent.getElementsByClassName('svg_palm')[0];
+		          
+				  svgEl.setAttribute( "viewBox" , viewBox.X +" "+ viewBox.Y +" "+ viewBox.W +" "+ viewBox.H );	
+
+				  svg_DirectParent.getElementsByClassName("heart")[0].setAttribute("transform","scale("+self.HeartScale+")");
+		
+	   }					
+	   this.StartAnim = function(){
+	   
+	        var AnimTimes   = 0;
+			 
+			function interval(func, wait ,  times){
+
+                         var interv = function(w, t){
+                             return function(){
+                                 if(typeof t === "undefined" || t-- > 0  ){
+								     if( AnimTimes < self.AnimateTimes ){
+                                       setTimeout(interv, w);
+									 }
+                                     try{
+                                         func.call(null);
+                                     }
+                                     catch(e){
+                                         t = 0;
+                                         throw e.toString();
+                                     }
+                                 }
+                             };
+                         }(wait, times);
+                         
+                         setTimeout(interv, wait);
+
+                     };
+			 
+			 
+             var ParseCoords = interval(function(){
+
+
+									   if( self.RunningX  > self.SVGViewBox.W  ){  
+									   
+                                              AnimTimes++;
+											  
+										      self.ResetDefault();
+											  self.UnitPulse();
+
+									          svg_DirectParent.getElementsByClassName("palmPoints")[0].setAttribute("points","");
+                                              svg_DirectParent.getElementsByClassName("circles")[0].setAttribute("cx","");
+                                              svg_DirectParent.getElementsByClassName("circles")[0].setAttribute("cy",self.SVGViewBox.H/2);
+											  
+									   }         
+									   var ko = "";   
+									   for(var i=0;i<self.PulseGraph.X.length;i++){
+                                         if( self.RunningX==parseInt(self.PulseGraph.X[i],10) ) {self.jumpOn='on';ko=i;break;}else{self.jumpOn='off';}
+                                       }
+									   
+								
+                                       if(self.jumpOn=='on')      {
+                                                         
+														  self.GoHeart = 1;
+														 
+                                                          self.RunningX = self.RunningX + self.PulseGraph.dX[ko]; 
+														  var yy = self.SVGViewBox.H/2 - self.PulseGraph.Y[ko]/2; 														  
+														  self.total = self.total + self.RunningX+','+yy+' ' ; 
+                                          
+                                       
+									   
+                                                          self.RunningX = self.RunningX + self.PulseGraph.dX[ko];  
+														  var yy =  self.SVGViewBox.H/2 + self.PulseGraph.Y[ko]/2; 
+														  self.total = self.total + self.RunningX+','+yy+' ';
+                                       
+                                       
+
+                                                               
+                                                           }
+                                       
+                                          else             {  
+
+															  yy = self.SVGViewBox.H/2;  self.total = self.total + self.RunningX+','+( self.SVGViewBox.H/2 )+' ';  
+                                                           }                                                            
+                                       
+                                       
+
+                                       svg_DirectParent.getElementsByClassName("palmPoints")[0].setAttribute("points",self.total);
+                                       svg_DirectParent.getElementsByClassName("circles")[0].setAttribute("cx",self.RunningX);
+                                       svg_DirectParent.getElementsByClassName("circles")[0].setAttribute("cy",self.SVGViewBox.H/2);
+						               
+									   if( self.GoHeart === 1 ){
+									   if( self.RadSin  > 3.14){ self.RadSin = 0;self.GoHeart = 0; }
+									       var rad = self.HeartScale + Math.sin(self.RadSin); 
+									           svg_DirectParent.getElementsByClassName("heart")[0].setAttribute("transform","scale("+rad+")");
+									           self.RadSin   = self.RadSin + 0.1;
+									   }
+									   
+							        self.RunningX = self.RunningX+1;
+									
+							      }
+							  
+							  
+					   , speed  );
+					  
+					  
+			}		  
+					  
+           self.ResetDefault();
+           self.Unit_All();
+           self.StartAnim();
+
+		 
+}
+
+
+
+
+
+
+onload = function(){  
+
+ var Pulse = new palm( document.getElementById("palm") , 10 );
+
+}
+
+</script>
+</head>
+
+<body>
+
+       <div id="wrapper">
+          <h1>Heart And Pulse Animation</h1>
+		  <div id="palm">
+                <svg class="svg_palm" xmlns="http://www.w3.org/2000/svg" version="1.1" style="width:100%;display: block;position: absolute;top: 0;left: 0;width: 100%;fill:white;" viewBox="0 0 960 200">
+                     <defs>
+                          <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="0%">
+                              <stop offset="80%" style="stop-color:#b9d646;stop-opacity:0"></stop>
+                              <stop offset="100%" style="stop-color:rgb(255,0,0);stop-opacity:1"></stop>
+                          </linearGradient>
+                     </defs>
+                     <polyline class="palmPoints" points="0,100 1,100 2,100 3,100 4,100 5,100 6,100 7,100 8,100 18,80 27,120 28,100 29,100 30,100 31,100 32,100 33,100 34,100 35,100 36,100 37,100 38,100 39,100 40,100 41,100 42,100 43,100 44,100 45,100 46,100 47,100 48,100 49,100 50,100 51,100 52,100 53,100 54,100 55,100 56,100 57,100 58,100 59,100 60,100 61,100 62,100 63,100 64,100 65,100 66,100 67,100 68,100 69,100 70,100 71,100 72,100 73,100 74,100 75,100 76,100 77,100 78,100 79,100 80,100 81,100 82,100 83,100 84,100 85,100 86,100 87,100 88,100 89,100 90,100 91,100 92,100 93,100 94,100 95,100 105,80 114,120 115,100 116,100 117,100 118,100 119,100 120,100 121,100 122,100 123,100 124,100 125,100 126,100 127,100 128,100 129,100 130,100 131,100 132,100 133,100 134,100 135,100 136,100 137,100 138,100 139,100 140,100 141,100 142,100 143,100 144,100 145,100 146,100 147,100 148,100 149,100 150,100 151,100 152,100 153,100 154,100 155,100 156,100 157,100 158,100 159,100 160,100 161,100 162,100 163,100 164,100 165,100 166,100 167,100 168,100 169,100 170,100 171,100 172,100 173,100 174,100 175,100 176,100 177,100 178,100 179,100 180,100 181,100 182,100 183,100 184,100 185,100 186,100 187,100 188,100 189,100 190,100 191,100 201,0 210,200 211,100 212,100 213,100 214,100 215,100 216,100 217,100 218,100 219,100 220,100 221,100 222,100 223,100 224,100 225,100 226,100 227,100 228,100 229,100 230,100 231,100 232,100 233,100 234,100 235,100 236,100 237,100 238,100 239,100 240,100 241,100 242,100 243,100 244,100 245,100 246,100 247,100 248,100 249,100 250,100 251,100 252,100 253,100 254,100 255,100 256,100 257,100 258,100 259,100 260,100 261,100 262,100 263,100 264,100 265,100 266,100 267,100 268,100 269,100 270,100 271,100 272,100 273,100 274,100 275,100 276,100 277,100 278,100 279,100 280,100 281,100 282,100 283,100 284,100 285,100 286,100 287,100 297,80 306,120 307,100 308,100 309,100 310,100 311,100 312,100 313,100 314,100 315,100 316,100 317,100 318,100 319,100 320,100 321,100 322,100 323,100 324,100 325,100 326,100 327,100 328,100 329,100 330,100 331,100 332,100 333,100 334,100 335,100 336,100 337,100 338,100 339,100 340,100 341,100 342,100 343,100 344,100 345,100 346,100 347,100 348,100 349,100 350,100 351,100 352,100 353,100 354,100 355,100 356,100 357,100 358,100 359,100 360,100 361,100 362,100 363,100 364,100 365,100 366,100 367,100 368,100 369,100 370,100 371,100 372,100 373,100 374,100 375,100 376,100 377,100 378,100 379,100 380,100 381,100 382,100 383,100 393,80 402,120 403,100 404,100 405,100 406,100 407,100 408,100 409,100 410,100 411,100 412,100 413,100 414,100 415,100 416,100 417,100 418,100 419,100 420,100 421,100 422,100 423,100 424,100 425,100 426,100 427,100 428,100 429,100 430,100 431,100 432,100 433,100 434,100 435,100 436,100 437,100 438,100 439,100 440,100 441,100 442,100 443,100 444,100 445,100 446,100 447,100 448,100 449,100 450,100 451,100 452,100 453,100 454,100 455,100 456,100 457,100 458,100 459,100 460,100 461,100 462,100 463,100 464,100 465,100 466,100 467,100 468,100 469,100 470,100 471,100 472,100 473,100 474,100 475,100 476,100 477,100 478,100 479,100 489,20 498,180 499,100 500,100 501,100 502,100 503,100 504,100 505,100 506,100 507,100 508,100 509,100 510,100 511,100 512,100 " style="fill:none;stroke-width:2;" stroke="url(#grad1)"></polyline>
+                     <circle class="circles" cx="512" cy="100" r="0" stroke="red" stroke-width="1" fill="red"></circle>
+			         <svg x="40%" y="15">
+			           <path transform="scale(5.997494986604054)" class="heart" stroke-width="0" d="M16,28.261c0,0-14-7.926-14-17.046c0-9.356,13.159-10.399,14-0.454c1.011-9.938,14-8.903,14,0.454 C30,20.335,16,28.261,16,28.261z" style="stroke: #E21737;fill: red;">							
+	                   </path>
+	                </svg>
+             </svg> 
+        </div>
+	  </div>
+	  
+
+		  </body></html>
